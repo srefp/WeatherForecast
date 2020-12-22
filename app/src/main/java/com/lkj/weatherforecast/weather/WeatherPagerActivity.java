@@ -53,7 +53,7 @@ public class WeatherPagerActivity extends AppCompatActivity implements WeatherFr
 
         UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_WEATHER_ID);
 
-        mViewPager = findViewById(R.id.crime_view_pager);
+        mViewPager = findViewById(R.id.weather_view_pager);
 
         mWeathers = WeatherLab.get(this).getWeathers();
         FragmentManager fragmentManager = getSupportFragmentManager();

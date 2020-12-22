@@ -1,6 +1,7 @@
 package com.lkj.weatherforecast.list;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -18,15 +19,21 @@ import android.widget.TextView;
 
 import com.lkj.weatherforecast.R;
 import com.lkj.weatherforecast.entity.Weather;
-import com.lkj.weatherforecast.lab.ImageResourceLab;
 import com.lkj.weatherforecast.lab.WeatherLab;
+import com.lkj.weatherforecast.uitl.WeatherFetcher;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 天气列表碎片
  */
 public class WeatherListFragment extends Fragment {
+
+    // 天气列表模型
+    private List<Weather> mWeathers;
+
     // 副标题是否可见
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
     // 天气列表
@@ -43,7 +50,7 @@ public class WeatherListFragment extends Fragment {
     private TextView mListMaxTemperature;
     private TextView mListMinTemperature;
     private ImageView mListImage;
-    private TextView mListDescription;
+    private TextView mListType;
 
     /**
      * 回调接口，当天气被选择的时候更新
@@ -54,6 +61,7 @@ public class WeatherListFragment extends Fragment {
 
     /**
      * fragment被绑定到activity的时候实例化回调对象
+     *
      * @param context
      */
     @Override
@@ -64,16 +72,21 @@ public class WeatherListFragment extends Fragment {
 
     /**
      * fragment被创建时，显示选择菜单
+     *
      * @param savedInstanceState
      */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        new FetchWeathersTask().execute();
+
         setHasOptionsMenu(true);
     }
 
     /**
      * 创建视图
+     *
      * @param inflater
      * @param container
      * @param savedInstanceState
@@ -84,7 +97,7 @@ public class WeatherListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.list_fragment_weather, container, false);
 
-        mWeatherRecyclerView = view.findViewById(R.id.crime_recycler_view);
+        mWeatherRecyclerView = view.findViewById(R.id.weather_recycler_view);
         mWeatherRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // 初始化列表视图的控件
@@ -92,7 +105,7 @@ public class WeatherListFragment extends Fragment {
         mListMaxTemperature = view.findViewById(R.id.list_max_temperature);
         mListMinTemperature = view.findViewById(R.id.list_min_temperature);
         mListImage = view.findViewById(R.id.list_image);
-        mListDescription = view.findViewById(R.id.list_description);
+        mListType = view.findViewById(R.id.list_type);
 
         if (savedInstanceState != null) {
             mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
@@ -114,6 +127,7 @@ public class WeatherListFragment extends Fragment {
 
     /**
      * 保存副标题可见状态
+     *
      * @param outState
      */
     @Override
@@ -133,6 +147,7 @@ public class WeatherListFragment extends Fragment {
 
     /**
      * 创建选择菜单
+     *
      * @param menu
      * @param inflater
      */
@@ -145,12 +160,13 @@ public class WeatherListFragment extends Fragment {
         if (mSubtitleVisible) {
             subtitleItem.setTitle(R.string.hide_subtitle);
         } else {
-            subtitleItem.setTitle(R.string.show_subtitle);
+            subtitleItem.setTitle(R.string.settings);
         }
     }
 
     /**
      * 点击选择菜单的时候进行相应的事件处理
+     *
      * @param item
      * @return
      */
@@ -158,10 +174,13 @@ public class WeatherListFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.new_crime:
-                Weather weather = new Weather();
-                WeatherLab.get(getActivity()).addWeather(weather);
-                updateUI();
-                mCallbacks.onWeatherSelected(weather);
+//                Weather weather = new Weather();
+//                WeatherLab.get(getActivity()).addWeather(weather);
+
+                // 暂时在这里向数据库插入数据
+//                getWeatherInformation();
+
+//                mCallbacks.onWeatherSelected(weather);
                 return true;
             case R.id.show_subtitle:
                 mSubtitleVisible = !mSubtitleVisible;
@@ -171,6 +190,17 @@ public class WeatherListFragment extends Fragment {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public void saveWeatherInformation(List<Weather> weathers) {
+        // 插入数据
+        for (Weather weather : weathers) {
+            WeatherLab.get(getActivity()).addWeather(weather);
+        }
+//        WeatherLab.get(getActivity()).addWeather(new Weather(UUID.randomUUID(), "Clouds", new Date(), "31", "21", "Goood!"));
+
+        // 更新视图界面
+        updateUI();
     }
 
     /**
@@ -223,6 +253,7 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 构造方法：实例化图片、文字控件
+         *
          * @param inflater
          * @param parent
          */
@@ -240,12 +271,16 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 绑定对应的天气模型
+         *
          * @param weather
          */
         public void bind(Weather weather) {
             mWeather = weather;
-            mWeatherImageView.setImageResource(ImageResourceLab.getImageResource(weather.getType()));
-            mDateTextView.setText(mWeather.getDate().toString());
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+            String dayOfWeek = simpleDateFormat.format(mWeather.getDate());
+
+            mWeatherImageView.setImageResource(mWeather.getImage());
+            mDateTextView.setText(dayOfWeek);
             mTypeTextView.setText(mWeather.getType());
             mMaxTemperature.setText(mWeather.getMaxT());
             mMinTemperature.setText(mWeather.getMinT());
@@ -253,6 +288,7 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 点击天气列表项的时候调用回调方法
+         *
          * @param view
          */
         @Override
@@ -266,11 +302,10 @@ public class WeatherListFragment extends Fragment {
      */
     private class WeatherAdapter extends RecyclerView.Adapter<WeatherHolder> {
 
-        // 天气列表模型
-        private List<Weather> mWeathers;
 
         /**
          * 构造方法：实例化天气列表模型
+         *
          * @param weathers
          */
         public WeatherAdapter(List<Weather> weathers) {
@@ -279,6 +314,7 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 创建视图支持器
+         *
          * @param parent
          * @param viewType
          * @return
@@ -291,6 +327,7 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 调用视图支持器来绑定天气模型和天气列表项视图控件
+         *
          * @param holder
          * @param position
          */
@@ -302,6 +339,7 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 获取天气列表中天气的总数
+         *
          * @return
          */
         @Override
@@ -311,10 +349,36 @@ public class WeatherListFragment extends Fragment {
 
         /**
          * 设置天气列表模型
+         *
          * @param weathers
          */
         public void setWeathers(List<Weather> weathers) {
             mWeathers = weathers;
         }
+    }
+
+    private class FetchWeathersTask extends AsyncTask<Void, Void, List<Weather>> {
+        @Override
+        protected List<Weather> doInBackground(Void... voids) {
+            return new WeatherFetcher().fetchWeathers();
+        }
+
+        @Override
+        protected void onPostExecute(List<Weather> weathers) {
+            mWeathers = weathers;
+
+            saveWeatherInformation(weathers);
+            updateTodayWeather(weathers.get(0));
+        }
+    }
+
+    private void updateTodayWeather(Weather weather) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM d", Locale.ENGLISH);
+        String monthAndDay = simpleDateFormat.format(weather.getDate());
+        mListDate.setText(monthAndDay);
+        mListMaxTemperature.setText(weather.getMaxT());
+        mListMinTemperature.setText(weather.getMinT());
+        mListImage.setImageResource(weather.getImage());
+        mListType.setText(weather.getType());
     }
 }

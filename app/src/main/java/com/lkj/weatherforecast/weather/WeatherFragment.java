@@ -6,17 +6,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,15 +23,18 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.lkj.weatherforecast.R;
 import com.lkj.weatherforecast.entity.Weather;
+import com.lkj.weatherforecast.lab.ImageResourceLab;
 import com.lkj.weatherforecast.lab.WeatherLab;
-import com.lkj.weatherforecast.uitl.PictureUtils;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import static android.widget.CompoundButton.OnClickListener;
@@ -65,6 +66,16 @@ public class WeatherFragment extends Fragment {
     private ImageButton mPhotoButton;
     private ImageView mPhotoView;
     private Callbacks mCallbacks;
+
+    // 天气组件
+    private TextView mDayOfWeek; // 星期
+    private TextView mMonthAndDay; // 日期
+    private TextView mMaxTemperatureTextView; // 最高温度
+    private TextView mMinTemperatureTextView; // 最低温度
+    private ImageView mWeatherImageView; // 天气图片
+    private TextView mTypeTextView; // 天气类型
+    private TextView mInfo; // 天气信息
+
 
     public interface Callbacks {
         void onWeatherUpdated(Weather weather);
@@ -103,7 +114,9 @@ public class WeatherFragment extends Fragment {
         super.onCreate(savedInstanceState);
         UUID weatherId = (UUID) getArguments().getSerializable(ARG_WEATHER_ID);
         mWeather = WeatherLab.get(getActivity()).getWeather(weatherId);
+        String info = mWeather.toString();
 //        mPhotoFile = WeatherLab.get(getActivity()).getPhotoFile(mWeather);
+        Log.d("TAG", "test");
     }
 
     /**
@@ -137,6 +150,31 @@ public class WeatherFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // 绑定fragment_crime视图
         View v = inflater.inflate(R.layout.fragment_weather, container, false);
+
+        // 实例化天气组件
+        mDayOfWeek = v.findViewById(R.id.weather_day_of_week);
+        mMonthAndDay = v.findViewById(R.id.weather_date);
+        mMaxTemperatureTextView = v.findViewById(R.id.weather_maxt);
+        mMinTemperatureTextView = v.findViewById(R.id.weather_mint);
+        mWeatherImageView = v.findViewById(R.id.weather_image);
+        mTypeTextView = v.findViewById(R.id.weather_type);
+        mInfo = v.findViewById(R.id.weather_info);
+
+        SimpleDateFormat simpleDateFormatDayOfWeek = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+        SimpleDateFormat simpleDateFormatMonthAndDay = new SimpleDateFormat("MMM d", Locale.ENGLISH);
+        String dayOfWeek = simpleDateFormatDayOfWeek.format(mWeather.getDate());
+        String monthAndDay = simpleDateFormatMonthAndDay.format(mWeather.getDate());
+
+        mDayOfWeek.setText(dayOfWeek);
+        mMonthAndDay.setText(monthAndDay);
+
+        String info = mWeather.toString();
+        mMaxTemperatureTextView.setText(mWeather.getMaxT());
+        mMinTemperatureTextView.setText(mWeather.getMinT());
+        // todo set image
+        mWeatherImageView.setImageResource(mWeather.getImage());
+        mTypeTextView.setText(mWeather.getType());
+        mInfo.setText(mWeather.getInfo());
 
         // 实例化组件，给组件添加动作监听
         mTitleField = v.findViewById(R.id.list_item_weather_date);

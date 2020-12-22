@@ -1,5 +1,7 @@
 package com.lkj.weatherforecast.entity;
 
+import com.lkj.weatherforecast.lab.ImageResourceLab;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -18,7 +20,6 @@ public class Weather {
 
     public Weather(UUID id) {
         uuid = id;
-        date = new Date();
     }
 
     public Weather(UUID uuid, String type, Date date, String maxT, String minT, String info) {
@@ -28,6 +29,10 @@ public class Weather {
         this.maxT = maxT;
         this.minT = minT;
         this.info = info;
+    }
+
+    public Integer getImage() {
+        return ImageResourceLab.getImageResource(type);
     }
 
     public UUID getUuid() {
@@ -80,5 +85,17 @@ public class Weather {
 
     public String getPhotoFilename() {
         return "IMG_" + getUuid().toString() + ".jpg";
+    }
+
+    @Override
+    public String toString() {
+        return "Weather{" +
+                "uuid=" + uuid +
+                ", type='" + type + '\'' +
+                ", date=" + date +
+                ", maxT='" + maxT + '\'' +
+                ", minT='" + minT + '\'' +
+                ", info='" + info + '\'' +
+                '}';
     }
 }

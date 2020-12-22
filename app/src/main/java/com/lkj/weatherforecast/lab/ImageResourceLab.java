@@ -10,10 +10,8 @@ public class ImageResourceLab {
 
     static {
         imageResourceMap = new HashMap<String, Integer>();
-        imageResourceMap.put("Clouds", R.drawable.clouds);
-        imageResourceMap.put("Blizzard", R.drawable.blizzard);
-        imageResourceMap.put("Clear", R.drawable.clear);
-        imageResourceMap.put("Heavy Rain", R.drawable.heavy_rain);
+        imageResourceMap.put("Cloudy", R.drawable.cloudy);
+        imageResourceMap.put("Sunny", R.drawable.sunny);
     }
 
     public static Integer getImageResource(String weatherType) {

@@ -8,7 +8,7 @@ public class WeatherDbSchema {
         public static final String NAME = "weathers";
 
         public static class Cols {
-            public static final String UUIDT = "uuid";
+            public static final String UUID = "uuid";
             public static final String TYPE = "type";
             public static final String DATE = "date";
             public static final String MAXT = "maxt";

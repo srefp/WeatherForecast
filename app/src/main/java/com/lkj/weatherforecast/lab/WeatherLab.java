@@ -10,9 +10,7 @@ import com.lkj.weatherforecast.db.WeatherCursorWrapper;
 import com.lkj.weatherforecast.db.WeatherDbSchema.WeatherTable;
 import com.lkj.weatherforecast.entity.Weather;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +27,7 @@ public class WeatherLab {
 
     /**
      * 懒汉式单例模式
+     *
      * @param context
      * @return
      */
@@ -42,6 +41,7 @@ public class WeatherLab {
 
     /**
      * 私有化构造函数
+     *
      * @param context
      */
     private WeatherLab(Context context) {
@@ -52,6 +52,7 @@ public class WeatherLab {
 
     /**
      * 添加天气
+     *
      * @param w
      */
     public void addWeather(Weather w) {
@@ -62,43 +63,44 @@ public class WeatherLab {
 
     /**
      * 获取所有天气
+     *
      * @return
      */
     public List<Weather> getWeathers() {
 
         List<Weather> weathers = new ArrayList<>();
 
-        weathers.add(new Weather(UUID.randomUUID(), "Clouds", new Date(), "30", "20", "Goood!"));
-        weathers.add(new Weather(UUID.randomUUID(), "Clouds", new Date(), "30", "20", "Goood!"));
+//        weathers.add(new Weather(UUID.randomUUID(), "Clouds", new Date(), "30", "20", "Goood!"));
+//        weathers.add(new Weather(UUID.randomUUID(), "Clouds", new Date(), "30", "20", "Goood!"));
 
         // 无网络的时候从SQLite提取数据
         // todo condition
-        if (false) {
-            WeatherCursorWrapper cursor = queryWeathers(null, null);
 
-            try {
-                cursor.moveToFirst();
-                while (!cursor.isAfterLast()) {
-                    weathers.add(cursor.getWeather());
-                    cursor.moveToNext();
-                }
-            } finally {
-                cursor.close();
+        WeatherCursorWrapper cursor = queryWeathers(null, null);
+
+        try {
+            cursor.moveToFirst();
+            while (!cursor.isAfterLast()) {
+                weathers.add(cursor.getWeather());
+                cursor.moveToNext();
             }
+        } finally {
+            cursor.close();
         }
 
         return weathers;
     }
-    
+
 
     /**
      * 根据id获取对应的天气
+     *
      * @param id
      * @return
      */
     public Weather getWeather(UUID id) {
         WeatherCursorWrapper cursor = queryWeathers(
-                UUIDT + " = ?",
+                UUID + " = ?",
                 new String[]{id.toString()}
         );
 
@@ -138,6 +140,7 @@ public class WeatherLab {
 
     /**
      * 查询天气
+     *
      * @param whereClause
      * @param whereArgs
      * @return
@@ -158,14 +161,15 @@ public class WeatherLab {
 
     /**
      * 持久化天气的时候，将天气对象转换为ContentValues
+     *
      * @param weather
      * @return
      */
     private static ContentValues getContentValues(Weather weather) {
         ContentValues values = new ContentValues();
-        values.put(UUIDT, weather.getUuid().toString());
+        values.put(UUID, weather.getUuid().toString());
         values.put(TYPE, weather.getType());
-        values.put(DATE, weather.getDate().toString());
+        values.put(DATE, weather.getDate().getTime());
         values.put(MAXT, weather.getMaxT());
         values.put(MINT, weather.getMinT());
         values.put(INFO, weather.getInfo());

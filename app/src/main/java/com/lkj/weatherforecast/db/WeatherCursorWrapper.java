@@ -19,10 +19,10 @@ public class WeatherCursorWrapper extends CursorWrapper {
     }
 
     public Weather getWeather() {
-        String uuidString = getString(getColumnIndex(WeatherTable.Cols.UUIDT));
+        String uuidString = getString(getColumnIndex(WeatherTable.Cols.UUID));
         String type = getString(getColumnIndex(WeatherTable.Cols.TYPE));
         long date = getLong(getColumnIndex(WeatherTable.Cols.DATE));
-        String maxT = getString(getColumnIndex(WeatherTable.Cols.MINT));
+        String maxT = getString(getColumnIndex(WeatherTable.Cols.MAXT));
         String minT = getString(getColumnIndex(WeatherTable.Cols.MINT));
         String info = getString(getColumnIndex(WeatherTable.Cols.INFO));
 

@@ -10,7 +10,7 @@ public class WeatherBaseHelper extends SQLiteOpenHelper {
     // 指定数据库的版本
     private static final int VERSION = 1;
     // 指定数据库的名字
-    private static final String DATABASE_NAME = "crimeBase.db";
+    private static final String DATABASE_NAME = "weatherBase.db";
 
     /**
      * 构造函数
@@ -30,7 +30,7 @@ public class WeatherBaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("create table " + WeatherTable.NAME + "(" +
                 " _id integer primary key autoincrement, " +
-                WeatherTable.Cols.UUIDT + ", " +
+                WeatherTable.Cols.UUID + ", " +
                 WeatherTable.Cols.TYPE + ", " +
                 WeatherTable.Cols.DATE + ", " +
                 WeatherTable.Cols.MAXT + ", " +
