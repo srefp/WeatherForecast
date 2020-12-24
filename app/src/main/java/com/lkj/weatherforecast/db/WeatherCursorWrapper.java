@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * Android查询数据是通过cursor来实现的
- * 该类之间获取cursor当前位置对应的crime
+ * 该类之间获取cursor当前位置对应的weather
  */
 public class WeatherCursorWrapper extends CursorWrapper {
     public WeatherCursorWrapper(Cursor cursor) {

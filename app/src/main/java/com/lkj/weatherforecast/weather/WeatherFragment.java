@@ -3,19 +3,19 @@ package com.lkj.weatherforecast.weather;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -27,28 +27,32 @@ import android.widget.TextView;
 
 import com.lkj.weatherforecast.R;
 import com.lkj.weatherforecast.entity.Weather;
-import com.lkj.weatherforecast.lab.ImageResourceLab;
 import com.lkj.weatherforecast.lab.WeatherLab;
+import com.lkj.weatherforecast.settings.SettingsActivity;
+import com.lkj.weatherforecast.util.Utility;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import static android.widget.CompoundButton.OnClickListener;
+import static android.content.Context.MODE_PRIVATE;
+import static com.lkj.weatherforecast.settings.SettingListFragment.TEMPERATURE_UNITS;
 
 /**
  * 采用fragment管理UI，可绕开Android系统activity使用规则的限制，一个页面2~3个fragment即可
  * fragment是一种控制器对象
  * fragment本身没有在屏幕上显示视图的能力，只有将fragment视图放置在activity的视图中，fragment视图才能显示在屏幕上
- *
+ * <p>
  * 添加fragment的方式有
  * 1.在activity布局中添加fragment
  * 2.在activity代码中添加fragment
  */
 public class WeatherFragment extends Fragment {
+
+    private SharedPreferences pref;
+    private SharedPreferences.Editor editor;
 
     private static final String ARG_WEATHER_ID = "weather_id";
     private static final String DIALOG_DATE = "DialogDate";
@@ -83,12 +87,13 @@ public class WeatherFragment extends Fragment {
 
     /**
      * 实例化对应的fragment，并添加参数
-     * @param crimeId
+     *
+     * @param weatherId
      * @return
      */
-    public static WeatherFragment newInstance(UUID crimeId) {
+    public static WeatherFragment newInstance(UUID weatherId) {
         Bundle args = new Bundle();
-        args.putSerializable(ARG_WEATHER_ID, crimeId);
+        args.putSerializable(ARG_WEATHER_ID, weatherId);
 
         WeatherFragment fragment = new WeatherFragment();
         fragment.setArguments(args);
@@ -97,6 +102,7 @@ public class WeatherFragment extends Fragment {
 
     /**
      * 与activity绑定时实例化mCallbacks
+     *
      * @param context
      */
     @Override
@@ -107,16 +113,100 @@ public class WeatherFragment extends Fragment {
 
     /**
      * 创建时实例化mWeather和mPhotoFile
+     *
      * @param savedInstanceState
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //获得SharedPreferences中data对应的对象
+        pref = getActivity().getSharedPreferences("data", MODE_PRIVATE);
+        //获得编辑器
+        editor = pref.edit();
+
         UUID weatherId = (UUID) getArguments().getSerializable(ARG_WEATHER_ID);
         mWeather = WeatherLab.get(getActivity()).getWeather(weatherId);
         String info = mWeather.toString();
 //        mPhotoFile = WeatherLab.get(getActivity()).getPhotoFile(mWeather);
         Log.d("TAG", "test");
+
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.fragment_weather_menu, menu);
+
+        MenuItem settingItem = menu.findItem(R.id.settings);
+    }
+
+    /**
+     * 点击选择菜单的时候进行相应的事件处理
+     *
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.map_location:
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_VIEW);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+
+                //将功能Scheme以URI的方式传入data
+                Uri uri = Uri.parse("androidamap://myLocation?sourceApplication=softname");
+                intent.setData(uri);
+
+                //启动该页面即可
+                startActivity(intent);
+
+                return true;
+            case R.id.settings:
+                startActivity(SettingsActivity.newIntent(getActivity()));
+
+                return true;
+            case R.id.share:
+                // todo share
+                allShare();
+            case R.id.message:
+                // todo message
+                share("短信");
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /**
+     * Android原生分享功能
+     * @param appName:要分享的应用程序名称
+     */
+    private void share(String appName) {
+        Intent share_intent = new Intent();
+        share_intent.setAction(Intent.ACTION_SEND);
+        share_intent.setType("text/plain");
+        share_intent.putExtra(Intent.EXTRA_SUBJECT, "分享");
+        share_intent.putExtra(Intent.EXTRA_TEXT, "推荐您使用一款软件:" + appName);
+        share_intent = Intent.createChooser(share_intent, "分享");
+        startActivity(share_intent);
+    }
+
+    /**
+     * Android原生分享功能
+     * 默认选取手机所有可以分享的APP
+     */
+    public void allShare() {
+        Intent share_intent = new Intent();
+        share_intent.setAction(Intent.ACTION_SEND);//设置分享行为
+        share_intent.setType("text/plain");//设置分享内容的类型
+        share_intent.putExtra(Intent.EXTRA_SUBJECT, "share");//添加分享内容标题
+        share_intent.putExtra(Intent.EXTRA_TEXT, "share with you:" + "android");//添加分享内容
+        //创建分享的Dialog
+        share_intent = Intent.createChooser(share_intent, "share");
+        startActivity(share_intent);
     }
 
     /**
@@ -141,6 +231,7 @@ public class WeatherFragment extends Fragment {
 
     /**
      * 创建视图
+     *
      * @param inflater
      * @param container
      * @param savedInstanceState
@@ -169,8 +260,16 @@ public class WeatherFragment extends Fragment {
         mMonthAndDay.setText(monthAndDay);
 
         String info = mWeather.toString();
-        mMaxTemperatureTextView.setText(mWeather.getMaxT());
-        mMinTemperatureTextView.setText(mWeather.getMinT());
+
+        String temperatureUnits = pref.getString(TEMPERATURE_UNITS, "Celsius");
+        if ("Celsius".equals(temperatureUnits)) {
+            mMaxTemperatureTextView.setText(mWeather.getMaxT() + "℃");
+            mMinTemperatureTextView.setText(mWeather.getMinT() + "℃");
+        } else if ("Fahrenheit".equals(temperatureUnits)) {
+            mMaxTemperatureTextView.setText(Utility.C2F(Integer.parseInt(mWeather.getMaxT())) + "℉");
+            mMinTemperatureTextView.setText(Utility.C2F(Integer.parseInt(mWeather.getMinT())) + "℉");
+        }
+
         // todo set image
         mWeatherImageView.setImageResource(mWeather.getImage());
         mTypeTextView.setText(mWeather.getType());
@@ -179,23 +278,23 @@ public class WeatherFragment extends Fragment {
         // 实例化组件，给组件添加动作监听
         mTitleField = v.findViewById(R.id.list_item_weather_date);
 //        mTitleField.setText(mWeather.getType());
-        mTitleField.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mWeather.setType(s.toString());
-//                updateWeather();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
+//        mTitleField.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//
+//            }
+//
+//            @Override
+//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+//                mWeather.setType(s.toString());
+////                updateWeather();
+//            }
+//
+//            @Override
+//            public void afterTextChanged(Editable s) {
+//
+//            }
+//        });
 
         // 更新日期
         mDateButton = v.findViewById(R.id.list_item_weather_type);
@@ -224,64 +323,64 @@ public class WeatherFragment extends Fragment {
 //            }
 //        });
 
-        mReportButton = v.findViewById(R.id.crime_report);
-        mReportButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("text/plain");
-//                i.putExtra(Intent.EXTRA_TEXT, getWeatherReport());
-                i.putExtra(Intent.EXTRA_SUBJECT,
-                        getString(R.string.crime_report_subject));
-                i = Intent.createChooser(i, getString(R.string.send_report));
-                startActivity(i);
-            }
-        });
+//        mReportButton = v.findViewById(R.id.crime_report);
+//        mReportButton.setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent i = new Intent(Intent.ACTION_SEND);
+//                i.setType("text/plain");
+////                i.putExtra(Intent.EXTRA_TEXT, getWeatherReport());
+//                i.putExtra(Intent.EXTRA_SUBJECT,
+//                        getString(R.string.crime_report_subject));
+//                i = Intent.createChooser(i, getString(R.string.send_report));
+//                startActivity(i);
+//            }
+//        });
 
-        final Intent pickContact = new Intent(Intent.ACTION_PICK,
-                ContactsContract.Contacts.CONTENT_URI);
-        mSuspectButton = v.findViewById(R.id.crime_suspect);
-        mSuspectButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivityForResult(pickContact, REQUEST_CONTACT);
-            }
-        });
+//        final Intent pickContact = new Intent(Intent.ACTION_PICK,
+//                ContactsContract.Contacts.CONTENT_URI);
+//        mSuspectButton = v.findViewById(R.id.crime_suspect);
+//        mSuspectButton.setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startActivityForResult(pickContact, REQUEST_CONTACT);
+//            }
+//        });
 
 //        if (mWeather.getSuspect() != null) {
 //            mSuspectButton.setText(mWeather.getSuspect());
 //        }
 
         PackageManager packageManager = getActivity().getPackageManager();
-        if (packageManager.resolveActivity(pickContact,
-                PackageManager.MATCH_DEFAULT_ONLY) == null) {
-            mSuspectButton.setEnabled(false);
-        }
+//        if (packageManager.resolveActivity(pickContact,
+//                PackageManager.MATCH_DEFAULT_ONLY) == null) {
+//            mSuspectButton.setEnabled(false);
+//        }
+//
+//        mPhotoButton = v.findViewById(R.id.crime_camera);
 
-        mPhotoButton = v.findViewById(R.id.crime_camera);
-
-        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        boolean canTakePhoto = mPhotoFile != null &&
-                captureImage.resolveActivity(packageManager) != null;
-        mPhotoButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Uri uri = FileProvider.getUriForFile(getActivity(),
-                        "com.lkj.weatherforecast.fileprovider", mPhotoFile);
-                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-
-                List<ResolveInfo> cameraActivities = getActivity()
-                        .getPackageManager().queryIntentActivities(captureImage,
-                                PackageManager.MATCH_DEFAULT_ONLY);
-
-                for (ResolveInfo activity : cameraActivities) {
-                    getActivity().grantUriPermission(activity.activityInfo.packageName,
-                            uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                }
-                startActivityForResult(captureImage, REQUEST_PHOTO);
-            }
-        });
+//        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//
+//        boolean canTakePhoto = mPhotoFile != null &&
+//                captureImage.resolveActivity(packageManager) != null;
+//        mPhotoButton.setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Uri uri = FileProvider.getUriForFile(getActivity(),
+//                        "com.lkj.weatherforecast.fileprovider", mPhotoFile);
+//                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+//
+//                List<ResolveInfo> cameraActivities = getActivity()
+//                        .getPackageManager().queryIntentActivities(captureImage,
+//                                PackageManager.MATCH_DEFAULT_ONLY);
+//
+//                for (ResolveInfo activity : cameraActivities) {
+//                    getActivity().grantUriPermission(activity.activityInfo.packageName,
+//                            uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//                }
+//                startActivityForResult(captureImage, REQUEST_PHOTO);
+//            }
+//        });
 
 //        mPhotoView = v.findViewById(R.id.crime_photo);
 //        updatePhotoView();
@@ -291,6 +390,7 @@ public class WeatherFragment extends Fragment {
 
     /**
      * 从上一个Activity进入的时候获取对请求码分析
+     *
      * @param requestCode
      * @param resultCode
      * @param data

@@ -1,6 +1,7 @@
 package com.lkj.weatherforecast.entity;
 
 import com.lkj.weatherforecast.lab.ImageResourceLab;
+import com.lkj.weatherforecast.util.Utility;
 
 import java.util.Date;
 import java.util.UUID;

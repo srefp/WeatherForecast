@@ -1,17 +1,13 @@
 <resources>
     <string name="app_name">WeatherForecast</string>
     <!-- 天气 -->
-    <string name="blizzard">blizzard</string>
-    <string name="clear">clear</string>
-    <string name="cloud">cloud</string>
-    <string name="cloudy">cloudy</string>
-    <string name="heavy_rain">heavy rain</string>
-    <string name="heavy_snow">heavy snow</string>
-    <string name="intense_fall">intense fall</string>
-    <string name="overcast">overcast</string>
-    <string name="partly_cloudy">partly cloudy</string>
-    <string name="shower">shower</string>
-    <string name="shower_to_clear">shower to clear</string>
     <string name="map_location">Map Location</string>
     <string name="settings">Settings</string>
+    <string name="location">Location</string>
+    <string name="value">Changsha</string>
+    <string name="notifications_value">Enabled</string>
+    <string name="weather_notifications">Weather Notifications</string>
+    <string name="temperature_units_value">Celsius</string>
+    <string name="temperature_units">Temperature Units</string>
+    <string name="details">Details</string>
 </resources>

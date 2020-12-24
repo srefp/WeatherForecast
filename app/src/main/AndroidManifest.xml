@@ -9,22 +9,34 @@
         android:required="false" />
 
     <application
+        android:name="org.litepal.LitePalApplication"
         android:allowBackup="true"
         android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/icon"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true">
+        <activity android:name=".settings.ChooseAreaActivity"
+            android:parentActivityName=".settings.SettingsActivity"
+            android:theme="@style/NoTheme"></activity>
+        <activity android:name=".settings.SettingsActivity"
+            android:parentActivityName=".list.WeatherListActivity"
+            android:label="@string/settings"></activity>
         <activity
             android:name=".weather.WeatherPagerActivity"
-            android:parentActivityName=".list.WeatherListActivity"></activity>
-        <activity android:name=".list.WeatherListActivity">
+            android:parentActivityName=".list.WeatherListActivity"
+            android:label="@string/details"/>
+        <activity android:name=".list.WeatherListActivity"
+            android:label="Sunshine">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name=".service.NotificationService" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"

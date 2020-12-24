@@ -1,11 +1,13 @@
 package com.lkj.weatherforecast.list;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -20,11 +22,17 @@ import android.widget.TextView;
 import com.lkj.weatherforecast.R;
 import com.lkj.weatherforecast.entity.Weather;
 import com.lkj.weatherforecast.lab.WeatherLab;
-import com.lkj.weatherforecast.uitl.WeatherFetcher;
+import com.lkj.weatherforecast.settings.SettingsActivity;
+import com.lkj.weatherforecast.util.JsonFetcher;
+import com.lkj.weatherforecast.util.Utility;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
+
+import static android.content.Context.MODE_PRIVATE;
+import static com.lkj.weatherforecast.settings.SettingListFragment.LNG_AND_LAT;
+import static com.lkj.weatherforecast.settings.SettingListFragment.TEMPERATURE_UNITS;
 
 /**
  * 天气列表碎片
@@ -33,6 +41,9 @@ public class WeatherListFragment extends Fragment {
 
     // 天气列表模型
     private List<Weather> mWeathers;
+
+    private SharedPreferences pref;
+    private SharedPreferences.Editor editor;
 
     // 副标题是否可见
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
@@ -79,9 +90,15 @@ public class WeatherListFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //获得SharedPreferences中data对应的对象
+        pref = getActivity().getSharedPreferences("data", MODE_PRIVATE);
+        //获得编辑器
+        editor = pref.edit();
+
         new FetchWeathersTask().execute();
 
         setHasOptionsMenu(true);
+
     }
 
     /**
@@ -100,7 +117,7 @@ public class WeatherListFragment extends Fragment {
         mWeatherRecyclerView = view.findViewById(R.id.weather_recycler_view);
         mWeatherRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        // 初始化列表视图的控件
+        // 初始化天气列表视图的控件
         mListDate = view.findViewById(R.id.list_date);
         mListMaxTemperature = view.findViewById(R.id.list_max_temperature);
         mListMinTemperature = view.findViewById(R.id.list_min_temperature);
@@ -113,6 +130,7 @@ public class WeatherListFragment extends Fragment {
 
         updateUI();
 
+
         return view;
     }
 
@@ -122,7 +140,9 @@ public class WeatherListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        new FetchWeathersTask().execute();
         updateUI();
+
     }
 
     /**
@@ -154,14 +174,15 @@ public class WeatherListFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.fragment_crime_list, menu);
+        inflater.inflate(R.menu.fragment_weather_list_menu, menu);
 
-        MenuItem subtitleItem = menu.findItem(R.id.show_subtitle);
-        if (mSubtitleVisible) {
-            subtitleItem.setTitle(R.string.hide_subtitle);
-        } else {
-            subtitleItem.setTitle(R.string.settings);
-        }
+        MenuItem subtitleItem = menu.findItem(R.id.settings);
+
+//        if (mSubtitleVisible) {
+//            subtitleItem.setTitle(R.string.hide_subtitle);
+//        } else {
+//            subtitleItem.setTitle(R.string.settings);
+//        }
     }
 
     /**
@@ -173,7 +194,18 @@ public class WeatherListFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.new_crime:
+            case R.id.map_location:
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_VIEW);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+
+                //将功能Scheme以URI的方式传入data
+                Uri uri = Uri.parse("androidamap://myLocation?sourceApplication=softname");
+                intent.setData(uri);
+
+                //启动该页面即可
+                startActivity(intent);
+
 //                Weather weather = new Weather();
 //                WeatherLab.get(getActivity()).addWeather(weather);
 
@@ -182,10 +214,12 @@ public class WeatherListFragment extends Fragment {
 
 //                mCallbacks.onWeatherSelected(weather);
                 return true;
-            case R.id.show_subtitle:
-                mSubtitleVisible = !mSubtitleVisible;
-                getActivity().invalidateOptionsMenu();
-                updateSubtitle();
+            case R.id.settings:
+                startActivity(SettingsActivity.newIntent(getActivity()));
+
+//                mSubtitleVisible = !mSubtitleVisible;
+//                getActivity().invalidateOptionsMenu();
+//                updateSubtitle();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -193,6 +227,8 @@ public class WeatherListFragment extends Fragment {
     }
 
     public void saveWeatherInformation(List<Weather> weathers) {
+        // 清空数据
+        WeatherLab.get(getActivity()).onFetchWeatherFromInternet();
         // 插入数据
         for (Weather weather : weathers) {
             WeatherLab.get(getActivity()).addWeather(weather);
@@ -208,15 +244,15 @@ public class WeatherListFragment extends Fragment {
      */
     private void updateSubtitle() {
         WeatherLab weatherLab = WeatherLab.get(getActivity());
-        int crimeCount = weatherLab.getWeathers().size();
-        String subtitle = getString(R.string.subtitle_format, crimeCount);
+        int weatherCount = weatherLab.getWeathers().size();
+//        String subtitle = getString(R.string.subtitle_format, weatherCount);
 
-        if (!mSubtitleVisible) {
-            subtitle = null;
-        }
-
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        activity.getSupportActionBar().setSubtitle(subtitle);
+//        if (!mSubtitleVisible) {
+//            subtitle = null;
+//        }
+//
+//        AppCompatActivity activity = (AppCompatActivity) getActivity();
+//        activity.getSupportActionBar().setSubtitle(subtitle);
     }
 
     /**
@@ -226,6 +262,7 @@ public class WeatherListFragment extends Fragment {
         WeatherLab weatherLab = WeatherLab.get(getActivity());
         List<Weather> weathers = weatherLab.getWeathers();
 
+
         if (mAdapter == null) {
             mAdapter = new WeatherAdapter(weathers);
             mWeatherRecyclerView.setAdapter(mAdapter);
@@ -233,6 +270,13 @@ public class WeatherListFragment extends Fragment {
             mAdapter.setWeathers(weathers);
             mAdapter.notifyDataSetChanged();
         }
+
+        if (mWeathers != null) {
+            if (mWeathers.size() > 0) {
+                updateTodayWeather(mWeathers.get(0));
+            }
+        }
+
         //更新副标题
         updateSubtitle();
     }
@@ -245,11 +289,11 @@ public class WeatherListFragment extends Fragment {
         // 天气模型
         private Weather mWeather;
 
-        private ImageView mWeatherImageView; // 天气图片
-        private TextView mDateTextView; // 天气日期
-        private TextView mTypeTextView; // 天气类型
-        private TextView mMaxTemperature; // 最高温度
-        private TextView mMinTemperature; // 最低温度
+        private final ImageView mWeatherImageView; // 天气图片
+        private final TextView mDateTextView; // 天气日期
+        private final TextView mTypeTextView; // 天气类型
+        private final TextView mMaxTemperature; // 最高温度
+        private final TextView mMinTemperature; // 最低温度
 
         /**
          * 构造方法：实例化图片、文字控件
@@ -258,7 +302,7 @@ public class WeatherListFragment extends Fragment {
          * @param parent
          */
         public WeatherHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.list_item_crime, parent, false));
+            super(inflater.inflate(R.layout.list_item_weather, parent, false));
             itemView.setOnClickListener(this);
 
             // 通过ViewHolder的itemView实例化成员变量
@@ -282,8 +326,15 @@ public class WeatherListFragment extends Fragment {
             mWeatherImageView.setImageResource(mWeather.getImage());
             mDateTextView.setText(dayOfWeek);
             mTypeTextView.setText(mWeather.getType());
-            mMaxTemperature.setText(mWeather.getMaxT());
-            mMinTemperature.setText(mWeather.getMinT());
+
+            String temperatureUnits = pref.getString(TEMPERATURE_UNITS, "Celsius");
+            if ("Celsius".equals(temperatureUnits)) {
+                mMaxTemperature.setText(mWeather.getMaxT() + "℃");
+                mMinTemperature.setText(mWeather.getMinT() + "℃");
+            } else if ("Fahrenheit".equals(temperatureUnits)) {
+                mMaxTemperature.setText(Utility.C2F(Integer.parseInt(mWeather.getMaxT())) + "℉");
+                mMinTemperature.setText(Utility.C2F(Integer.parseInt(mWeather.getMinT())) + "℉");
+            }
         }
 
         /**
@@ -360,7 +411,7 @@ public class WeatherListFragment extends Fragment {
     private class FetchWeathersTask extends AsyncTask<Void, Void, List<Weather>> {
         @Override
         protected List<Weather> doInBackground(Void... voids) {
-            return new WeatherFetcher().fetchWeathers();
+            return new JsonFetcher().fetchWeathers(pref.getString(LNG_AND_LAT, "112.9,28.2"));
         }
 
         @Override
@@ -375,9 +426,15 @@ public class WeatherListFragment extends Fragment {
     private void updateTodayWeather(Weather weather) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM d", Locale.ENGLISH);
         String monthAndDay = simpleDateFormat.format(weather.getDate());
-        mListDate.setText(monthAndDay);
-        mListMaxTemperature.setText(weather.getMaxT());
-        mListMinTemperature.setText(weather.getMinT());
+        mListDate.setText("Today, " + monthAndDay);
+        String temperatureUnits = pref.getString(TEMPERATURE_UNITS, "Celsius");
+        if ("Celsius".equals(temperatureUnits)) {
+            mListMaxTemperature.setText(weather.getMaxT() + "℃");
+            mListMinTemperature.setText(weather.getMinT() + "℃");
+        } else if ("Fahrenheit".equals(temperatureUnits)) {
+            mListMaxTemperature.setText(String.valueOf(Utility.C2F(Integer.parseInt(weather.getMaxT()))) + "℉");
+            mListMinTemperature.setText(String.valueOf(Utility.C2F(Integer.parseInt(weather.getMinT()))) + "℉");
+        }
         mListImage.setImageResource(weather.getImage());
         mListType.setText(weather.getType());
     }

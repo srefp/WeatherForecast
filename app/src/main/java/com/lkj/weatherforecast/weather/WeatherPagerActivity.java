@@ -32,12 +32,12 @@ public class WeatherPagerActivity extends AppCompatActivity implements WeatherFr
     /**
      * 返回创建WeatherPageActivity的意图，供其它视图开启WeatherPageActivity
      * @param packageContext
-     * @param crimeId
+     * @param weatherId
      * @return
      */
-    public static Intent newIntent(Context packageContext, UUID crimeId) {
+    public static Intent newIntent(Context packageContext, UUID weatherId) {
         Intent intent = new Intent(packageContext, WeatherPagerActivity.class);
-        intent.putExtra(EXTRA_WEATHER_ID, crimeId);
+        intent.putExtra(EXTRA_WEATHER_ID, weatherId);
         return intent;
     }
 
@@ -49,9 +49,9 @@ public class WeatherPagerActivity extends AppCompatActivity implements WeatherFr
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_crime_pager);
+        setContentView(R.layout.activity_weather_pager);
 
-        UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_WEATHER_ID);
+        UUID weatherId = (UUID) getIntent().getSerializableExtra(EXTRA_WEATHER_ID);
 
         mViewPager = findViewById(R.id.weather_view_pager);
 
@@ -71,7 +71,7 @@ public class WeatherPagerActivity extends AppCompatActivity implements WeatherFr
         });
 
         for (int i = 0; i < mWeathers.size(); i++) {
-            if (mWeathers.get(i).getUuid().equals(crimeId)) {
+            if (mWeathers.get(i).getUuid().equals(weatherId)) {
                 mViewPager.setCurrentItem(i);
                 break;
             }

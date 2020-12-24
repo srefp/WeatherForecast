@@ -22,8 +22,8 @@ import static com.lkj.weatherforecast.db.WeatherDbSchema.WeatherTable.Cols.*;
 public class WeatherLab {
     private static WeatherLab sWeatherLab;
 
-    private Context mContext;
-    private SQLiteDatabase mDatabase;
+    private final Context mContext;
+    private final SQLiteDatabase mDatabase;
 
     /**
      * 懒汉式单例模式
@@ -59,6 +59,13 @@ public class WeatherLab {
         ContentValues values = getContentValues(w);
 
         mDatabase.insert(WeatherTable.NAME, null, values);
+    }
+
+    /**
+     * 从网络获取数据的时候先清除本地数据
+     */
+    public void onFetchWeatherFromInternet() {
+        mDatabase.execSQL("delete from " + WeatherTable.NAME);
     }
 
     /**
